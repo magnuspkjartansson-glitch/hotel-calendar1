@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="is">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bókunardagatal – Standard Room</title>
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --card: #111821;
+      --muted:#2a3646;
+      --accent:#5eead4;
+      --accent-2:#8b5cf6;
+      --text:#ecf2f8;
+      --text-dim:#a8b3c2;
+      --danger:#ef4444;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    html,body{height:100%}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      margin:0; background: radial-gradient(1200px 600px at 10% -10%, #1b2430 0%, #0b0f14 50%, #0b0f14 100%);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px; margin:40px auto; padding:0 16px}
+    .header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow)}
+    h1{font-size:clamp(22px,3vw,30px); margin:0}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 140px), var(--card); border:1px solid #1f2a37; border-radius:var(--radius); box-shadow:var(--shadow)}
+    .grid{display:grid; gap:18px}
+    @media (min-width:960px){ .grid{grid-template-columns: 1.2fr .8fr} }
+
+    .calendar{padding:18px}
+    .cal-header{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px}
+    .cal-nav{display:flex; gap:8px}
+    button.icon{background:#101720; color:var(--text); border:1px solid #243244; border-radius:12px; width:38px; height:38px; display:grid; place-items:center; cursor:pointer}
+    button.icon:hover{border-color:#32465f}
+    .month-grid{display:grid; grid-template-columns: repeat(7, 1fr); gap:6px}
+    .dow{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; padding:6px 4px}
+    .day{position:relative; aspect-ratio:1/1; border-radius:12px; border:1px solid #213044; background: #0f1721; display:flex; align-items:flex-start; justify-content:flex-end; padding:8px; cursor:pointer; user-select:none}
+    .day:hover{border-color:#355174}
+    .day.disabled{opacity:.35; cursor:not-allowed; text-decoration: line-through}
+    .day.sold{background: #1a232f; border-style:dashed}
+    .day.in-range{background: #142131}
+    .day.start, .day.end{outline:2px solid var(--accent-2); box-shadow:0 0 0 3px rgba(139,92,246,.25) inset}
+    .day .num{position:absolute; top:8px; left:8px; font-weight:600}
+    .day .badge{position:absolute; bottom:6px; left:6px; right:6px; font-size:10px; color:#cbd5e1; opacity:.9}
+    .legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; color:var(--text-dim); font-size:12px}
+    .legend span{display:inline-flex; align-items:center; gap:6px}
+    .dot{width:14px;height:14px;border-radius:6px;display:inline-block;border:1px solid #213044;background:#0f1721}
+    .dot.sel{outline:2px solid var(--accent-2)}
+    .dot.range{background:#142131}
+    .dot.sold{background:#1a232f}
+
+    .panel{padding:18px; display:grid; gap:14px}
+    .row{display:grid; gap:10px}
+    label{font-size:13px; color:var(--text-dim)}
+    input, select{background:#0f1721; border:1px solid #233246; color:var(--text); border-radius:12px; padding:12px; font-size:15px; width:100%}
+    .inputs{display:grid; gap:10px; grid-template-columns: 1fr 1fr 1fr}
+    @media (max-width:700px){ .inputs{grid-template-columns:1fr} }
+
+    .summary{background:linear-gradient(180deg, rgba(94,234,212,.12), transparent 150px), #0f1721; border:1px solid #22484a; border-radius:16px; padding:14px; display:grid; gap:6px}
+    .summary .line{display:flex; align-items:center; justify-content:space-between; gap:10px}
+    .total{font-size:20px; font-weight:700}
+
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{appearance:none; border:1px solid #2b3a50; background:#121a25; color:var(--text); border-radius:14px; padding:12px 16px; cursor:pointer; font-weight:600}
+    .btn.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#071014; border:none}
+    .btn.danger{border-color:#3b1e22; background:#221014}
+    .hint{font-size:12px; color:var(--text-dim)}
+    .notice{padding:10px 12px; border:1px solid #314257; background:#0d1520; border-radius:12px; color:#c3d2e2; font-size:13px}
+
+    .foot{opacity:.75; text-align:center; font-size:12px; margin-top:18px}
+    a{color:#a5b4fc}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <h1 id="brandTitle">Bókunardagatal</h1>
+      </div>
+      <div class="notice">Hýstu þennan HTML-skrá á GitHub Pages og linkaðu/eða embeddu slóðina inn í Canva.</div>
+    </div>
+
+    <div class="grid">
+      <section class="card calendar">
+        <div class="cal-header">
+          <div>
+            <div style="font-size:13px; color:var(--text-dim)">Veldu inn- og útritun</div>
+            <div id="monthLabel" style="font-size:18px; font-weight:700"></div>
+          </div>
+          <div class="cal-nav">
+            <button class="icon" id="prevBtn" aria-label="Fyrri mánuður">⟨</button>
+            <button class="icon" id="nextBtn" aria-label="Næsti mánuður">⟩</button>
+          </div>
+        </div>
+        <div class="month-grid" id="dow"></div>
+        <div class="month-grid" id="days"></div>
+        <div class="legend">
+          <span><i class="dot sel"></i>Valin dagsetning</span>
+          <span><i class="dot range"></i>Valið tímabil</span>
+          <span><i class="dot sold"></i>Upptekið</span>
+        </div>
+      </section>
+
+      <aside class="card panel">
+        <div class="row inputs">
+          <div>
+            <label>Innskráning (check‑in)</label>
+            <input id="checkIn" type="text" placeholder="YYYY-MM-DD" readonly>
+          </div>
+          <div>
+            <label>Útskráning (check‑out)</label>
+            <input id="checkOut" type="text" placeholder="YYYY-MM-DD" readonly>
+          </div>
+          <div>
+            <label>Fjöldi gesta</label>
+            <select id="guests">
+              <option>1</option>
+              <option selected>2</option>
+              <option>3</option>
+              <option>4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="summary" id="summary">
+          <div class="line"><span>Nætur</span><strong id="nights">0</strong></div>
+          <div class="line"><span>Verð á nótt</span><strong id="pricePerNight">—</strong></div>
+          <div class="line"><span>Heildarverð</span><strong class="total" id="total">—</strong></div>
+          <div class="hint" id="rulesHint"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="resetBtn">Hreinsa val</button>
+          <button class="btn primary" id="bookBtn">Bóka</button>
+          <button class="btn" id="icsBtn" title="Hlaða niður ICS dagatalskrá">Sækja .ics</button>
+        </div>
+        <div class="hint">Sjálfgefið opnast póstur við bókun. Hægt er að skipta í Formspree ef þú vilt vef-form.</div>
+      </aside>
+    </div>
+
+    <div class="foot">Standard Room • 30.000 kr./nótt</div>
+  </div>
+
+<script>
+const SETTINGS = {
+  propertyName: "Standard Room",
+  currency: "ISK",
+  pricePerNight: 30000,
+  weekendSurchargePct: 0,
+  cleaningFee: 0,
+  taxPercent: 0,
+  minNights: 1,
+  maxNights: 30,
+  allowSameDay: false,
+  openMonthsAhead: 12,
+  leadTimeDays: 0,
+  blockedDates: [
+    // t.d. "2025-09-10","2025-09-11"
+  ],
+  bookingEmail: "bookings@example.com",
+  bookingMethod: "mailto",   // "mailto" eða "formspree"
+  formspreeEndpoint: ""      // t.d. "/f/abcdxyzw"
+};
+
+const isIS = new Intl.NumberFormat('is-IS', { style: 'currency', currency: SETTINGS.currency, maximumFractionDigits: 0 });
+const MONTHS = ["janúar","febrúar","mars","apríl","maí","júní","júlí","ágúst","september","október","nóvember","desember"];
+const DOW = ["sun","mán","þri","mið","fim","fös","lau"];
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const startBase = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+
+let viewYear = startBase.getFullYear();
+let viewMonth = startBase.getMonth();
+let checkIn = null, checkOut = null;
+
+const brandTitle = document.getElementById('brandTitle');
+const monthLabel = document.getElementById('monthLabel');
+const daysEl = document.getElementById('days');
+const dowEl = document.getElementById('dow');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const nightsEl = document.getElementById('nights');
+const ppnEl = document.getElementById('pricePerNight');
+const totalEl = document.getElementById('total');
+const rulesHint = document.getElementById('rulesHint');
+const inEl = document.getElementById('checkIn');
+const outEl = document.getElementById('checkOut');
+const guestsEl = document.getElementById('guests');
+
+brandTitle.textContent = SETTINGS.propertyName + " – Bókunardagatal";
+
+function renderDOW(){
+  dowEl.innerHTML = '';
+  for(const name of DOW){
+    const c = document.createElement('div');
+    c.className = 'dow'; c.textContent = name;
+    dowEl.appendChild(c);
+  }
+}
+renderDOW();
+
+function ymd(d){
+  if(!d) return '';
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function addDays(d, n){ const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+function diffDays(a,b){ return Math.round((b-a)/(1000*60*60*24)); }
+
+function isBlocked(d){
+  const key = ymd(d);
+  if(SETTINGS.blockedDates.includes(key)) return true;
+  const minStart = addDays(TODAY, SETTINGS.leadTimeDays);
+  if(d < minStart) return true;
+  return false;
+}
+
+function weekendSurcharge(date){
+  const dow = date.getDay();
+  if(dow===5 || dow===6){
+    return SETTINGS.pricePerNight * (SETTINGS.weekendSurchargePct/100);
+  }
+  return 0;
+}
+
+function priceForStay(start, end){
+  if(!start || !end) return { nights:0, total:0 };
+  let nights = diffDays(start, end);
+  let total = 0;
+  for(let i=0;i<nights;i++){
+    const d = addDays(start,i);
+    total += SETTINGS.pricePerNight + weekendSurcharge(d);
+  }
+  total += SETTINGS.cleaningFee;
+  if(SETTINGS.taxPercent>0){ total *= (1 + SETTINGS.taxPercent/100); }
+  return { nights, total };
+}
+
+function monthStart(year, month){ return new Date(year, month, 1); }
+function monthEnd(year, month){ return new Date(year, month+1, 0); }
+
+function inSelectedRange(d){
+  if(!checkIn || !checkOut) return false;
+  return d>=checkIn && d<=checkOut;
+}
+
+function canShowMonth(year, month){
+  const openUntil = new Date(TODAY.getFullYear(), TODAY.getMonth()+SETTINGS.openMonthsAhead, 1);
+  const firstOf = new Date(year, month, 1);
+  return firstOf >= new Date(TODAY.getFullYear(), TODAY.getMonth(), 1) && firstOf < openUntil;
+}
+
+function render(){
+  prevBtn.disabled = !canShowMonth(viewYear, viewMonth-1);
+  nextBtn.disabled = !canShowMonth(viewYear, viewMonth+1);
+
+  const ms = monthStart(viewYear, viewMonth);
+  const me = monthEnd(viewYear, viewMonth);
+  monthLabel.textContent = `${MONTHS[ms.getMonth()]} ${ms.getFullYear()}`;
+
+  daysEl.innerHTML = '';
+
+  for(let i=0;i<ms.getDay();i++){
+    const blank = document.createElement('div');
+    daysEl.appendChild(blank);
+  }
+
+  const totalDays = me.getDate();
+  for(let day=1; day<=totalDays; day++){
+    const date = new Date(viewYear, viewMonth, day);
+    const c = document.createElement('div');
+    c.className = 'day';
+    c.setAttribute('data-date', ymd(date));
+
+    const disabled = isBlocked(date);
+    if(disabled) c.classList.add('disabled','sold');
+
+    if(inSelectedRange(date)) c.classList.add('in-range');
+    if(checkIn && ymd(date)===ymd(checkIn)) c.classList.add('start');
+    if(checkOut && ymd(date)===ymd(checkOut)) c.classList.add('end');
+
+    const num = document.createElement('div');
+    num.className = 'num'; num.textContent = String(day);
+    c.appendChild(num);
+
+    if(disabled){
+      const b = document.createElement('div'); b.className='badge'; b.textContent='Upptekið'; c.appendChild(b);
+    }
+
+    c.addEventListener('click', () => onDayClick(date, disabled));
+    c.addEventListener('mouseenter', () => onHover(date));
+
+    daysEl.appendChild(c);
+  }
+
+  const { nights, total } = priceForStay(checkIn, checkOut);
+  nightsEl.textContent = nights;
+  ppnEl.textContent = isIS.format(SETTINGS.pricePerNight);
+  totalEl.textContent = nights>0 ? isIS.format(total) : '—';
+
+  rulesHint.textContent = `Lágmark ${SETTINGS.minNights} nætur, hámark ${SETTINGS.maxNights}.`;
+
+  inEl.value = checkIn? ymd(checkIn) : '';
+  outEl.value = checkOut? ymd(checkOut) : '';
+}
+
+function onDayClick(date, disabled){
+  if(disabled) return;
+  if(!checkIn || (checkIn && checkOut)){
+    checkIn = date; checkOut = null;
+  } else {
+    if(date <= checkIn){
+      checkIn = date; checkOut = null;
+    } else {
+      for(let d = addDays(checkIn,0); d <= date; d = addDays(d,1)){
+        if(isBlocked(d)) { alert('Veldu annað tímabil – dagur innan bilsins er upptekinn.'); return; }
+      }
+      const nights = diffDays(checkIn, date);
+      if(nights < SETTINGS.minNights){ alert(`Lágmark ${SETTINGS.minNights} nætur.`); return; }
+      if(nights > SETTINGS.maxNights){ alert(`Hámark ${SETTINGS.maxNights} nætur.`); return; }
+      checkOut = date;
+    }
+  }
+  render();
+}
+
+function onHover(date){
+  if(!checkIn || checkOut) return;
+  document.querySelectorAll('.day').forEach(el=>{
+    const d = new Date(el.getAttribute('data-date')); el.classList.remove('in-range');
+    if(d>=checkIn && d<=date) el.classList.add('in-range');
+  });
+}
+
+prevBtn.addEventListener('click', ()=>{ if(canShowMonth(viewYear, viewMonth-1)){ const d=new Date(viewYear, viewMonth-1, 1); viewYear=d.getFullYear(); viewMonth=d.getMonth(); render(); }});
+nextBtn.addEventListener('click', ()=>{ if(canShowMonth(viewYear, viewMonth+1)){ const d=new Date(viewYear, viewMonth+1, 1); viewYear=d.getFullYear(); viewMonth=d.getMonth(); render(); }});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{ checkIn=null; checkOut=null; render(); });
+
+document.getElementById('bookBtn').addEventListener('click', ()=>{
+  if(!checkIn || !checkOut){ alert('Veldu inn- og útritun.'); return; }
+  const { nights, total } = priceForStay(checkIn, checkOut);
+  const guests = guestsEl.value;
+  const subject = encodeURIComponent(`Bókunarbeiðni: ${SETTINGS.propertyName} ${ymd(checkIn)} → ${ymd(checkOut)} (${nights} nætur)`);
+  const body = encodeURIComponent([
+    `Herbergi: ${SETTINGS.propertyName}`,
+    `Innskráning: ${ymd(checkIn)}`,
+    `Útskráning: ${ymd(checkOut)}`,
+    `Nætur: ${nights}`,
+    `Gestir: ${guests}`,
+    `Verð á nótt: ${isIS.format(SETTINGS.pricePerNight)}`,
+    `Heildarverð: ${isIS.format(total)}`,
+    '',
+    'Vinsamlegast svarið með staðfestingu.'
+  ].join('\n'));
+
+  if(SETTINGS.bookingMethod === 'mailto'){
+    const href = `mailto:${SETTINGS.bookingEmail}?subject=${subject}&body=${body}`;
+    window.location.href = href;
+  } else if(SETTINGS.bookingMethod === 'formspree' && SETTINGS.formspreeEndpoint){
+    fetch(`https://formspree.io${SETTINGS.formspreeEndpoint}`, {
+      method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'},
+      body: JSON.stringify({
+        room: SETTINGS.propertyName,
+        check_in: ymd(checkIn),
+        check_out: ymd(checkOut),
+        nights, guests,
+        price_per_night: SETTINGS.pricePerNight,
+        total
+      })
+    }).then(res=>{
+      if(res.ok){ alert('Bókunarbeiðni send!'); }
+      else { alert('Ekki tókst að senda. Reyndu aftur eða notaðu mailto aðferðina.'); }
+    }).catch(()=>alert('Villa við sendingu.'));
+  } else {
+    alert('Stilltu bookingMethod í "mailto" eða "formspree".');
+  }
+});
+
+function downloadICS(){
+  if(!checkIn || !checkOut){ alert('Veldu inn- og útritun.'); return; }
+  const { nights, total } = priceForStay(checkIn, checkOut);
+  const dt = (d)=>{
+    const pad=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}`;
+  };
+  const uid = `${Date.now()}@diy-booking`;
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DIY Booking//IS',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dt(new Date())}T000000Z`,
+    `DTSTART;VALUE=DATE:${dt(checkIn)}`,
+    `DTEND;VALUE=DATE:${dt(checkOut)}`,
+    `SUMMARY:${SETTINGS.propertyName} bókun (${nights} nætur)`,
+    `DESCRIPTION:Heildarverð ${isIS.format(total)}`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\n');
+
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `booking-${ymd(checkIn)}-${ymd(checkOut)}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('icsBtn').addEventListener('click', downloadICS);
+
+render();
+</script>
+</body>
+</html>
